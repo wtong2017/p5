@@ -603,3 +603,6 @@ class VispyRenderer2D(OpenGLRenderer):
         raise NotImplementedError(
             "Vispy Renderer does not support offscreen buffers yet, use 'skia' as your backend renderer"
         )
+    
+    def create_image(self, width, height):
+        return VispyPImage(width, height)

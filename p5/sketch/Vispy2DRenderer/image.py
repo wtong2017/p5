@@ -165,6 +165,7 @@ class VispyPImage(PImage):
         self._img_data = data.reshape((height, width, self._channels))
         self._img_texture = None
         self._reload = False
+        self.pixels = list(self._img.getdata())
 
     @_ensure_loaded
     def _get_pixel(self, key):
@@ -330,7 +331,9 @@ class VispyPImage(PImage):
         self._load()
 
     def update_pixels(self):
-        pass
+        """Update the image with the current pixel data."""
+        self._img.putdata(self.pixels)
+        self._reload = True
 
     def mask(self, image):
         raise NotImplementedError
