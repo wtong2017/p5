@@ -21,6 +21,7 @@ from p5.core.structure import push_style
 
 from p5.core import constants
 from p5.core.image import PImage
+from p5.sketch.pixels import Pixels
 
 
 def _ensure_loaded(func):
@@ -165,7 +166,7 @@ class VispyPImage(PImage):
         self._img_data = data.reshape((height, width, self._channels))
         self._img_texture = None
         self._reload = False
-        self.pixels = list(self._img.getdata())
+        self.pixels = Pixels(list(self._img.getdata()))
 
     @_ensure_loaded
     def _get_pixel(self, key):
