@@ -26,7 +26,7 @@ from ..pmath import constrain
 from .constants import colour_codes
 from . import p5
 
-__all__ = ["color_mode", "Color"]
+__all__ = ["color_mode", "Color", "color"]
 
 
 def color_mode(
@@ -477,3 +477,17 @@ class Color:
         :rtype: str
         """
         return ("#%02x%02x%02x" % self.rgb).upper()
+
+def color(*args, **kwargs) -> Color:
+    """Create a new color.
+
+    :param args: The positional arguments that define the color.
+    :type args: tuple
+
+    :param kwargs: The keyword arguments that define the color.
+    :type kwargs: dict
+
+    :returns: A new color object.
+
+    """
+    return Color(*args, **kwargs)
