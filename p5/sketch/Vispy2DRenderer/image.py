@@ -333,7 +333,7 @@ class VispyPImage(PImage):
 
     def update_pixels(self):
         """Update the image with the current pixel data."""
-        self._img.putdata(self.pixels)
+        self._img.putdata(self.pixels.tolist())
         self._reload = True
 
     def mask(self, image):

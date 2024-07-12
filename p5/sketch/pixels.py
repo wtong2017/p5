@@ -2,10 +2,7 @@ from p5.core.color import Color
 
 class Pixels(list):
     def __init__(self, l):
-        super().__init__(l)
+        super().__init__([Color(*v) for v in l])
     
-    def __setitem__(self, key, value):
-        if isinstance(value, Color):
-            super().__setitem__(key, tuple(int(v*255) for v in value.rgba))
-        elif isinstance(value, (list, tuple)):
-            super().__setitem__(key, value)
+    def tolist(self):
+        return [tuple(int(v*255) for v in value.rgba) for value in self]
