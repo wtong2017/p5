@@ -26,7 +26,7 @@ from ..pmath import constrain
 from .constants import colour_codes
 from . import p5
 
-__all__ = ["color_mode", "Color", "color"]
+__all__ = ["color_mode", "Color", "color", "red", "green", "blue", "alpha", "hue", "saturation", "brightness"]
 
 
 def color_mode(
@@ -491,3 +491,28 @@ def color(*args, **kwargs) -> Color:
 
     """
     return Color(*args, **kwargs)
+
+def red(c):
+    return c.red
+
+def green(c):
+    return c.green
+
+def blue(c):
+    return c.blue
+
+def alpha(c):
+    return c.alpha
+
+def hue(c):
+    return c.hue
+
+def saturation(c):
+    return c.saturation
+
+def brightness(c):
+    return c.brightness
+
+def lerp_color(c1, c2, amt):
+    c1.lerp(c2, amt)
+
