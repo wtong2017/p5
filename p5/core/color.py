@@ -491,3 +491,36 @@ def color(*args, **kwargs) -> Color:
 
     """
     return Color(*args, **kwargs)
+
+def red(c):
+    """Get the red component of a color.
+
+    :param c: The color to get the red component of.
+    :type c: Color
+
+    :returns: The red component of the color.
+
+    """
+    return c.red
+
+def green(c):
+    """Get the green component of a color.
+
+    :param c: The color to get the green component of.
+    :type c: Color
+
+    :returns: The green component of the color.
+
+    """
+    return c.green
+
+def blue(c):
+    """Get the blue component of a color.
+
+    :param c: The color to get the blue component of.
+    :type c: Color
+
+    :returns: The blue component of the color.
+
+    """
+    return c.blue
