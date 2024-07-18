@@ -547,8 +547,8 @@ class VispyRenderer2D(OpenGLRenderer):
         # Add else statement below to resize the img._img first,
         #   or it will take much time to render large image,
         #   even when small size is specified to the image
-        if size != img.size:
-            img.size = size
+        #if size != img.size:
+        #    img.size = size
 
         lx, ly = location
         sx, sy = size

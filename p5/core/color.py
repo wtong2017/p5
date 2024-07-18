@@ -26,7 +26,7 @@ from ..pmath import constrain
 from .constants import colour_codes
 from . import p5
 
-__all__ = ["color_mode", "Color", "color", "red", "green", "blue", "alpha", "hue", "saturation", "brightness"]
+__all__ = ["color_mode", "Color", "color", "red", "green", "blue", "alpha", "hue", "saturation", "brightness", "lerp_color"]
 
 
 def color_mode(
@@ -493,26 +493,92 @@ def color(*args, **kwargs) -> Color:
     return Color(*args, **kwargs)
 
 def red(c):
+    """Get the red component of a color.
+
+    :param c: The color to get the red component of.
+    :type c: Color
+
+    :returns: The red component of the color.
+
+    """
     return c.red
 
 def green(c):
+    """Get the green component of a color.
+
+    :param c: The color to get the green component of.
+    :type c: Color
+
+    :returns: The green component of the color.
+
+    """
     return c.green
 
 def blue(c):
+    """Get the blue component of a color.
+
+    :param c: The color to get the blue component of.
+    :type c: Color
+
+    :returns: The blue component of the color.
+
+    """
     return c.blue
 
 def alpha(c):
+    """Get the alpha component of a color.
+
+    :param c: The color to get the alpha component of.
+    :type c: Color
+
+    :returns: The alpha component of the color.
+
+    """
     return c.alpha
 
 def hue(c):
+    """Get the HSB hue component of a color.
+
+    :param c: The color to get the hue component of.
+    :type c: Color
+
+    :returns: The hue component of the color.
+
+    """
     return c.hue
 
 def saturation(c):
+    """Get the HSB saturation component of a color.
+
+    :param c: The color to get the saturation component of.
+    :type c: Color
+
+    :returns: The saturation component of the color.
+
+    """
     return c.saturation
 
 def brightness(c):
+    """Get the HSB brightness component of a color.
+
+    :param c: The color to get the brightness component of.
+    :type c: Color
+
+    :returns: The brightness component of the color.
+
+    """
     return c.brightness
 
 def lerp_color(c1, c2, amt):
-    c1.lerp(c2, amt)
+    """Linear interpolation between 2 colors.
 
+    :param c1: The color at the start of the interpolation
+    :param c2: The color at the end of the interpolation
+    :param amt: The fractional distance [0.0...1.0] from c1 to c2
+    :type c1, c2: Color
+    :type amt: float
+
+    :returns: The interpolated color.
+
+    """
+    return c1.lerp(c2, amt)
