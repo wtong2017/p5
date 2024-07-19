@@ -576,21 +576,24 @@ class VispyRenderer2D(OpenGLRenderer):
         return pimg
 
     def load_pixels(self):
-        pixels = VispyPImage(builtins.width, builtins.height, RGB)
+        self.pimage = VispyPImage(builtins.width, builtins.height, RGB)
         # sketch.renderer.flush_geometry()
         pixel_data = self.fbuffer.read(mode="color", alpha=False)
 
-        pixels._img = Image.fromarray(pixel_data)
-        builtins.pixels = pixels
+        self.pimage._img = Image.fromarray(pixel_data)
 
-        pixels._load()
+        self.pimage._load()
+        builtins.pixels = self.pimage.pixels
 
     def update_pixels(self):
         with push_style():
             image_mode(CORNER)
             self.style.tint_enabled = False
-            image(builtins.pixels, *(0, 0))
+            self.pimage.pixels = builtins.pixels
+            self.pimage.update_pixels()
+            image(self.pimage, *(0, 0))
 
+        self.pimage = None
         builtins.pixels = None
 
     def save_canvas(self, filename, canvas):
