@@ -10,22 +10,36 @@ class Pixels(list):
         Args:
             l (list): List of tuples
         """
+        super().__init__(l)
+    
+    def __setitem__(self, key, value):
+        """
+        Set the value of the Pixels object at the given index.
+
+        Args:
+            key (int): Index
+            value (Color): Color
+        """
+        super().__setitem__(key, tuple(int(v/_p5.renderer.style.color_range[i]*255) for i, v in enumerate(value.rgba)))
+    
+    def __getitem__(self, key):
+        """
+        Get the value of the Pixels object at the given index.
+
+        Args:
+            key (int): Index
+
+        Returns:
+            Color: Color
+        """
         # Save the current color mode and range
         old_color_mode = _p5.renderer.style.color_parse_mode
         old_color_range = _p5.renderer.style.color_range
 
         # Set color mode to RGB 255
         color_mode(RGB, 255)
-        super().__init__([Color(*v, color_mode="RGBA") for v in l])
+        ret = Color(*super().__getitem__(key), color_mode="RGBA")
 
         # Reset color mode
         color_mode(old_color_mode, *old_color_range)
-    
-    def tolist(self):
-        """
-        Convert the Pixels object to a list of tuples.
-
-        Returns:
-            list: List of tuples
-        """
-        return [tuple(int(v/_p5.renderer.style.color_range[i]*255) for i, v in enumerate(value.rgba)) for value in self]
+        return ret
