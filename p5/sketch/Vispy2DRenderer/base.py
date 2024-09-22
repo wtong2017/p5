@@ -190,9 +190,11 @@ class VispySketch(app.Canvas):
 
     def on_mouse_move(self, event):
         mev = MouseEvent(event, active=builtins.mouse_is_pressed)
-        self._enqueue_event("mouse_moved", mev)
-        if builtins.mouse_is_pressed:
-            self._enqueue_event("mouse_dragged", mev)
+
+        # Queue a 'mouse_dragged` or `mouse_moved` event, not both similar to p5.js
+        self._enqueue_event(
+            "mouse_dragged" if builtins.mouse_is_pressed else "mouse_moved", mev
+        )
 
     def on_mouse_wheel(self, event):
         mev = MouseEvent(event, active=builtins.mouse_is_pressed)
