@@ -2,7 +2,7 @@ from abc import ABC
 import numpy as np
 
 from p5.core import p5
-from p5.core.constants import SType, ROUND, MITER, LEFT, TOP, CORNER, CENTER, RGB
+from p5.core.constants import SType, ROUND, MITER, LEFT, BOTTOM, CORNER, CENTER, RGB
 from p5.pmath import matrix
 from .shape import Arc, PShape
 
@@ -241,7 +241,7 @@ class Style2D:
     # typography variables
     font_family = ImageFont.load_default()
     text_align_x = LEFT
-    text_align_y = TOP
+    text_align_y = BOTTOM
     text_leading = 0
 
     image_mode = CORNER

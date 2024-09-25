@@ -23,6 +23,7 @@ import re
 import textwrap
 import urllib
 from contextlib import contextmanager
+import os
 
 import numpy as np
 from PIL import ImageFont, ImageChops, ImageFilter, ImageDraw, Image
@@ -53,7 +54,6 @@ from .shaders2d import src_line
 from .shaders2d import src_texture
 from .shape import PShape, Arc
 
-
 class VispyRenderer2D(OpenGLRenderer):
     def __init__(self):
         super().__init__(src_fbuffer, src_default)
@@ -61,6 +61,7 @@ class VispyRenderer2D(OpenGLRenderer):
         self.texture_prog["texcoord"] = self.fbuf_texcoords
         self.line_prog = None
         self.modelview_matrix = np.identity(4)
+        self.load_font(os.path.join(os.path.dirname(__file__), "fonts", "Arial.ttf"))
 
     def reset_view(self):
         self.viewport = (
@@ -405,6 +406,7 @@ class VispyRenderer2D(OpenGLRenderer):
         """
 
         if name.endswith("ttf") or name.endswith("otf"):
+            self.font_path = name
             font = ImageFont.truetype(name, size)
         elif name.endswith("pil"):
             font = ImageFont.load(name)
@@ -427,7 +429,7 @@ class VispyRenderer2D(OpenGLRenderer):
             size = list(self.style.font_family.getsize_multiline(text_string))
             size[1] += self.style.text_leading * text_string.count("\n")
         else:
-            size = self.style.font_family.getsize(text_string)
+            size = self.style.font_family.getbbox(text_string)[2:]
 
         is_stroke_valid = False  # True when stroke_weight != 0
         is_min_filter = False  # True when stroke_weight <0
@@ -509,18 +511,18 @@ class VispyRenderer2D(OpenGLRenderer):
             self.text_size(size)
 
     def text_size(self, size):
-        if hasattr(self.style.font_family, "path"):
-            if self.style.font_family.path.endswith(
+        if self.font_path is not None:
+            if self.font_path.endswith(
                 "ttf"
-            ) or self.style.font_family.path.endswith("otf"):
+            ) or self.font_path.endswith("otf"):
                 self.style.font_family = ImageFont.truetype(
-                    self.style.font_family.path, size
+                    self.font_path, size
                 )
         else:
             raise ValueError("text_size is not supported for Bitmap Fonts")
 
     def text_width(self, text):
-        return self.style.font_family.getsize(text)[0]
+        return self.style.font_family.getbbox(text)[2]
 
     def text_ascent(self):
         ascent, descent = self.style.font_family.getmetrics()
