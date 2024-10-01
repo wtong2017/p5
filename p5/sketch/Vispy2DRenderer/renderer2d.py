@@ -43,6 +43,7 @@ from p5.core.constants import (
     CORNERS,
     CORNER,
     RGB,
+    BASELINE,
 )
 from p5.core.image import image, image_mode
 from p5.core.structure import push_style
@@ -492,6 +493,8 @@ class VispyRenderer2D(OpenGLRenderer):
             position[1] -= height
         elif self.style.text_align_y == CENTER:
             position[1] -= height / 2
+        elif self.style.text_align_y == BASELINE:
+            position[1] -= self.text_ascent()
 
         with push_style():
             if self.style.fill_enabled:
