@@ -333,8 +333,26 @@ class VispyPImage(PImage):
 
     def update_pixels(self):
         """Update the image with the current pixel data."""
-        self._img.putdata(self.pixels)
-        self._reload = True
+        arr = np.array(self.pixels, dtype=np.uint32)
+        r = ((arr >> 16) & 0xFF).astype(np.uint8)
+        g = ((arr >> 8) & 0xFF).astype(np.uint8)
+        b = (arr & 0xFF).astype(np.uint8)
+
+        if self._channels == 4:
+            a = ((arr >> 24) & 0xFF).astype(np.uint8)
+            data = np.stack([r, g, b, a], axis=-1).reshape((self._height, self._width, 4))
+        elif self._channels == 3:
+            data = np.stack([r, g, b], axis=-1).reshape((self._height, self._width, 3))
+        elif self._channels == 1:
+            gray = (0.299 * r + 0.587 * g + 0.144 * b).astype(np.uint8)
+            data = gray.reshape((self._height, self._width))
+        else:
+            raise ValueError("Image has unexpected number of channels")
+
+        self._img_data = data
+        self._img = Image.fromarray(data, self._img.mode)
+        self._img_texture = None
+        self._reload = False
 
     def mask(self, image):
         raise NotImplementedError
