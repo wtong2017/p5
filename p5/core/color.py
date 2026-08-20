@@ -28,6 +28,77 @@ from . import p5
 
 __all__ = ["color_mode", "Color", "color", "red", "green", "blue", "alpha", "hue", "saturation", "brightness", "lerp_color"]
 
+_color_mults: Tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0)
+_color_norm: Tuple[float, float, float, float] = (1 / 255, 1 / 255, 1 / 255, 1 / 255)
+_rgb_color_mode: bool = True
+
+
+class PackedColor(int):
+    """ARGB color packed into a single int - the fast path returned by
+    ``color()`` (RGB or HSB). Subclasses ``int`` so it works anywhere an
+    int does, but stays distinguishable from a bare grayscale value (see
+    ``parse_color()``). Mirrors ``Color``'s .red/.green/.blue/.alpha/
+    .hue/.saturation/.brightness (+ short aliases), scaled by the current
+    color_range. HSB values are recomputed from the stored RGB bytes each
+    read, so they can drift slightly after an HSB-mode creation - same as
+    Processing. Unlike ``Color.b``, .b here is always blue.
+    """
+
+    @property
+    def red(self):
+        return ((self >> 16) & 0xFF) / 255.0 * p5.renderer.style.color_range[0]
+
+    @property
+    def green(self):
+        return ((self >> 8) & 0xFF) / 255.0 * p5.renderer.style.color_range[1]
+
+    @property
+    def blue(self):
+        return (self & 0xFF) / 255.0 * p5.renderer.style.color_range[2]
+
+    @property
+    def alpha(self):
+        return ((self >> 24) & 0xFF) / 255.0 * p5.renderer.style.color_range[3]
+
+    @property
+    def hue(self):
+        h, _, _ = colorsys.rgb_to_hsv(
+            ((self >> 16) & 0xFF) / 255.0, ((self >> 8) & 0xFF) / 255.0, (self & 0xFF) / 255.0
+        )
+        return h * p5.renderer.style.color_range[0]
+
+    @property
+    def saturation(self):
+        _, s, _ = colorsys.rgb_to_hsv(
+            ((self >> 16) & 0xFF) / 255.0, ((self >> 8) & 0xFF) / 255.0, (self & 0xFF) / 255.0
+        )
+        return s * p5.renderer.style.color_range[1]
+
+    @property
+    def brightness(self):
+        _, _, v = colorsys.rgb_to_hsv(
+            ((self >> 16) & 0xFF) / 255.0, ((self >> 8) & 0xFF) / 255.0, (self & 0xFF) / 255.0
+        )
+        return v * p5.renderer.style.color_range[2]
+
+    r = red
+    g = green
+    b = blue
+    a = alpha
+    h = hue
+    s = saturation
+    v = brightness
+
+    def lerp(self, target, amount):
+        """Interpolate to `target` by `amount` (0-1). Mirrors
+        ``Color.lerp()`` so it works for both ``Color`` and ``PackedColor``.
+        """
+        lerped = (lerp(s, t, amount) for s, t in zip(
+            (self.red, self.green, self.blue, self.alpha),
+            (target.red, target.green, target.blue, target.alpha),
+        ))
+        return Color(*lerped, color_mode="RGB")
+
 
 def color_mode(
     mode: str,
@@ -54,11 +125,17 @@ def color_mode(
         255)
 
     """
+    global _color_mults, _color_norm, _rgb_color_mode
+
     if max_2 is None:
         max_2 = max_1
 
     if max_3 is None:
         max_3 = max_1
+
+    _color_mults = (255.0 / max_1, 255.0 / max_2, 255.0 / max_3, 255.0 / max_alpha)
+    _color_norm = (1.0 / max_1, 1.0 / max_2, 1.0 / max_3, 1.0 / max_alpha)
+    _rgb_color_mode = mode.startswith("RGB")
 
     p5.renderer.style.color_range = (max_1, max_2, max_3, max_alpha)
     p5.renderer.style.color_parse_mode = mode
@@ -101,6 +178,16 @@ def parse_color(
     :returns: The color parsed as red, green, blue, alpha values.
 
     """
+
+    # Already-packed color (from color()'s fast path) - unpack directly,
+    # it's not a grayscale intensity even though it's also just an int.
+    if len(args) == 1 and not kwargs and isinstance(args[0], PackedColor):
+        packed = args[0]
+        r = (packed >> 16) & 0xFF
+        g = (packed >> 8) & 0xFF
+        b = packed & 0xFF
+        a = (packed >> 24) & 0xFF
+        return r / 255.0, g / 255.0, b / 255.0, a / 255.0
 
     if "alpha" in kwargs:
         alpha = kwargs["alpha"]
@@ -478,7 +565,7 @@ class Color:
         """
         return ("#%02x%02x%02x" % self.rgb).upper()
 
-def color(*args, **kwargs) -> Color:
+def color(*args, **kwargs) -> PackedColor:
     """Create a new color.
 
     :param args: The positional arguments that define the color.
@@ -487,10 +574,53 @@ def color(*args, **kwargs) -> Color:
     :param kwargs: The keyword arguments that define the color.
     :type kwargs: dict
 
-    :returns: A new color object.
+    :returns: A new color, packed as ARGB.
+    :rtype: PackedColor
 
     """
-    return Color(*args, **kwargs)
+    if not kwargs:
+        n = len(args)
+        if n == 3 or n == 4:
+            if _rgb_color_mode:
+                k = _color_mults
+                r = int(args[0] * k[0]); r = 255 if r > 255 else (0 if r < 0 else r)
+                g = int(args[1] * k[1]); g = 255 if g > 255 else (0 if g < 0 else g)
+                b = int(args[2] * k[2]); b = 255 if b > 255 else (0 if b < 0 else b)
+                a = int(args[3] * k[3]) if n == 4 else 255
+                a = 255 if a > 255 else (0 if a < 0 else a)
+            else:
+                k = _color_norm
+                h = args[0] * k[0]; h = 1.0 if h > 1.0 else (0.0 if h < 0.0 else h)
+                s = args[1] * k[1]; s = 1.0 if s > 1.0 else (0.0 if s < 0.0 else s)
+                v = args[2] * k[2]; v = 1.0 if v > 1.0 else (0.0 if v < 0.0 else v)
+                r, g, b = colorsys.hsv_to_rgb(h, s, v)
+
+                r = int(r * 255); r = 255 if r > 255 else (0 if r < 0 else r)
+                g = int(g * 255); g = 255 if g > 255 else (0 if g < 0 else g)
+                b = int(b * 255); b = 255 if b > 255 else (0 if b < 0 else b)
+                a = int(args[3] * k[3] * 255) if n == 4 else 255
+                a = 255 if a > 255 else (0 if a < 0 else a)
+            return PackedColor((a << 24) | (r << 16) | (g << 8) | b)
+
+    # Rarer shapes (gray, gray+alpha, existing Color, hex/name, kwargs) -
+    # funnel through parse_color(). Color needs its own case since
+    # parse_color() doesn't know about it (Color.__init__ handles that).
+    if len(args) == 1 and isinstance(args[0], Color):
+        r, g, b, a = args[0]._red, args[0]._green, args[0]._blue, args[0]._alpha
+    elif len(args) == 2 and isinstance(args[0], Color):
+        max_alpha = p5.renderer.style.color_range[3] if p5.renderer else 255
+        r, g, b = args[0]._red, args[0]._green, args[0]._blue
+        a = args[1] / max_alpha
+    else:
+        r, g, b, a = parse_color(
+            *args, color_mode=("RGB" if _rgb_color_mode else "HSB"), normed=False, **kwargs
+        )
+
+    r = int(r * 255); r = 255 if r > 255 else (0 if r < 0 else r)
+    g = int(g * 255); g = 255 if g > 255 else (0 if g < 0 else g)
+    b = int(b * 255); b = 255 if b > 255 else (0 if b < 0 else b)
+    a = int(a * 255); a = 255 if a > 255 else (0 if a < 0 else a)
+    return PackedColor((a << 24) | (r << 16) | (g << 8) | b)
 
 def red(c):
     """Get the red component of a color.
